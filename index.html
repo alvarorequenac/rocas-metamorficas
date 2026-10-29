@@ -107,341 +107,270 @@ table.t td.cell{min-width:140px}
 <script>const BOXES={"cuarcita": [[0.523, 0.8105, 0.3548, 0.0859]], "albita": [[0.1447, 0.7086, 0.724, 0.0996]], "estaurolita": [[0.0305, 0.8499, 0.9065, 0.1003]], "grafito": [[0.1263, 0.7949, 0.7515, 0.0996]], "granate": [[0.103, 0.8211, 0.8065, 0.0984]], "mica": [[0.128, 0.8217, 0.6815, 0.0971]], "andalucita": [[0.6022, 0.1155, 0.3823, 0.1127], [0.0488, 0.6542, 0.9148, 0.0996]], "serpentina": [[0.0472, 0.7936, 0.9107, 0.0977]], "sillimanita": [[0.1188, 0.743, 0.7448, 0.0896]], "talco": [[0.1563, 0.8255, 0.6998, 0.0996]], "verde": [[0.2313, 0.7993, 0.6048, 0.099]], "filita": [[0.3805, 0.4286, 0.2173, 0.0871]], "gneiss": [[0.6588, 0.6474, 0.2915, 0.0859]], "metarenita": [[0.4655, 0.8317, 0.4523, 0.0846]], "milonita": [[0.1774, 0.6463, 0.2271, 0.1023]], "marmol": [[0.343, 0.4561, 0.3248, 0.0871]], "pizarra": [[0.3588, 0.6292, 0.2948, 0.0852]], "skarn": [[0.6063, 0.7686, 0.2515, 0.0871]]};
 </script>
 <script>// ====== DATOS ======
-// Fuente principal: PPT "Rocas metamórficas" (Petrografía Macroscópica 2026-2).
-// Lo marcado como "comp" (complemento) NO está en el PPT: son deducciones/apoyo para completar la tabla del oficio.
+// Fuente única: PPT "Rocas metamórficas" (Petrografía Macroscópica 2026-2).
+// Si el PPT no da el dato, queda null / [] (= vacío o "no aplica").
+// Átomos: "Etiqueta que se muestra|sinónimo|raíz" — el primero es lo que ves; el resto solo sirve para corregir lo que escribes.
 
+const NA = "No aplica / no indicado";
 const OPC = {
-  tipo: ["Regional", "Contacto", "Dislocación (dinámico)", "Regional con magmatismo", "Metasomatismo"],
+  tipo: ["Regional", "Contacto", "Dislocación (dinámico)", "Regional con magmatismo", "Metasomatismo", NA],
   foli: ["Foliada (exfoliada)", "No foliada (no exfoliada)", "Cataclástica"],
-  grado: ["Muy bajo", "Bajo", "Medio", "Medio-alto", "Alto", "No aplica"],
-  factor: {
-    baja: "Baja T° y baja P (predomina presión dirigida)",
-    media: "T° y P intermedias",
-    alta: "Alta T° y alta P",
-    contacto: "Alta T°, baja P (calor del intrusivo, sin esfuerzo)",
-    dislocacion: "Presión dirigida / cizalla, baja T° (deformación mecánica)",
-    metaso: "Fluidos (metasomatismo) + T°"
-  },
-  facies: ["Esquistos verdes", "Epidota-anfíbol", "Anfibolita", "Granulita", "Corneana de piroxeno", "Sanidinita", "Sin facie / no aplica"]
+  grado: ["Muy bajo", "Bajo", "Medio", "Medio-alto", "Alto", NA],
+  facies: ["Esquistos verdes", "Epidota-anfíbol", "Anfibolita", "Granulita", "Corneana de piroxeno", "Sanidinita", NA],
+  textura: ["Lepidoblástica", "Granoblástica", "Porfidoblástica", "Nematoblástica", "Nematolepidoblástica", "Bandeada", "Granoblástica bandeada", "Porfidoclástica", "Milonítica"]
 };
 
-// Mineral crítico de cada facie (complemento, no está en el PPT)
-const FACIES_INFO = {
-  "Esquistos verdes": { crit: "clorita + actinolita + epidota + albita (minerales verdes)", grado: "bajo", color: "#5c8a5a" },
-  "Epidota-anfíbol": { crit: "epidota + anfíbol (hornblenda) + albita/plagioclasa; aparece granate", grado: "medio", color: "#7a9a4a" },
-  "Anfibolita": { crit: "hornblenda + plagioclasa (± granate)", grado: "medio-alto", color: "#a88a3a" },
-  "Granulita": { crit: "piroxeno (ortopiroxeno) + plagioclasa; desaparecen las micas", grado: "alto", color: "#b5532b" },
-  "Corneana de piroxeno": { crit: "piroxeno + plagioclasa (± cordierita, andalucita) — contacto de alta T°", grado: "alto (T°)", color: "#8a4a6a" },
-  "Sanidinita": { crit: "sanidina (feldespato K de alta T°) — contacto de muy alta T°", grado: "muy alto (T°)", color: "#6a4a8a" },
-  "Sin facie / no aplica": { crit: "—", grado: "—", color: "#777" }
-};
+const FACIES_COLOR = { "Esquistos verdes": "#5c8a5a", "Epidota-anfíbol": "#7a9a4a", "Anfibolita": "#a88a3a", "Granulita": "#b5532b", "Corneana de piroxeno": "#8a4a6a", "Sanidinita": "#6a4a8a" };
 
-// Formato de keywords: grupos separados por coma, alternativas separadas por |
+const T_REG = "Regional|regional", T_CON = "Contacto|contacto";
+const F_EV = "Esquistos verdes|esquisto verde|esquistos verdes", F_EA = "Epidota-anfíbol|epidota anfibol|epidota", F_AN = "Anfibolita|anfibolita", F_GR = "Granulita|granulita", F_CP = "Corneana de piroxeno|corneana|piroxeno", F_SA = "Sanidinita|sanidinita";
+const D_PEN = "Foliación penetrativa|penetrativa", D_ESQ = "Textura esquistosa|esquistosa";
+
 const ROCAS = [
   {
     id: "pizarra", nombre: "Pizarra", alias: [], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Lepidoblástica", kText: "lepido",
-    grado: "Bajo", fk: "baja", facies: ["Esquistos verdes"],
-    comp: "Cuarzo afanítico, feldespato, clorita y minerales arcillosos",
-    kComp: "cuarzo|qz, feldespato|feld|fsp, clorita, arcill",
-    proto: "Argilita, rocas tobáceas, rocas de grano fino, lutita",
-    kProto: "argilita, tobac|toba, grano fino, lutita",
-    diag: "Brillo escaso, textura laminar, foliación poco penetrativa",
-    kDiag: "brillo escaso|poco brillo|sin brillo|opaco, laminar, poco penetrativa|poco penetr",
-    pista: "Gris oscura, superficies lisas y planas; se parte en lajas. Poco brillo.",
-    clave: "Foliación poco penetrativa + brillo escaso (la filita sí brilla)."
+    tipo: T_REG, foli: 0, textura: "Lepidoblástica", kText: ["Lepidoblástica|lepido"],
+    grado: "Bajo", facies: [F_EV],
+    comp: ["Cuarzo afanítico|cuarzo|qz", "Feldespato|feld|fsp", "Clorita", "Minerales arcillosos|arcilla"],
+    proto: ["Argilita", "Rocas tobáceas|toba|tobacea", "Rocas de grano fino|grano fino", "Lutita"],
+    diag: ["Brillo escaso|poco brillo|sin brillo", "Textura laminar|laminar", "Foliación poco penetrativa|poco penetrativa|poco penetr"],
+    pista: "Gris oscura, superficies lisas y planas; se parte en lajas.",
+    clave: "Foliación poco penetrativa y brillo escaso (la filita sí brilla)."
   },
   {
     id: "filita", nombre: "Filita", alias: [], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Lepidoblástica", kText: "lepido",
-    grado: "Bajo", fk: "baja", facies: ["Esquistos verdes"],
-    comp: "Cuarzo de grano fino, mica, clorita, sericita y otros",
-    kComp: "cuarzo|qz, mica, clorita, sericita",
-    proto: "Argilita, limonita (así dice el PPT; lo normal sería limolita)",
-    kProto: "argilita, limonita|limolita",
-    diag: "Brillo notorio, textura laminar, compuesta principalmente por micas",
-    kDiag: "brillo, laminar, mica",
-    pista: "Brillo sedoso/satinado, superficies onduladas o crenuladas, a veces con óxidos.",
-    clave: "Como la pizarra pero con BRILLO notorio (micas)."
+    tipo: T_REG, foli: 0, textura: "Lepidoblástica", kText: ["Lepidoblástica|lepido"],
+    grado: "Bajo", facies: [F_EV],
+    comp: ["Cuarzo de grano fino|cuarzo|qz", "Mica", "Clorita", "Sericita"],
+    proto: ["Argilita", "Limonita|limolita"],
+    diag: ["Brillo notorio|brillo", "Textura laminar|laminar", "Compuesta principalmente por micas|micas|mica"],
+    pista: "Brillo sedoso, superficies onduladas o crenuladas.",
+    clave: "Como la pizarra pero con brillo notorio (micas).",
+    nota: "El PPT escribe 'limonita' como protolito (probablemente quiso decir limolita). Se acepta cualquiera de las dos."
   },
   {
-    id: "talco", nombre: "Esquisto de talco", alias: ["talcoesquisto"], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Lepidoblástica", kText: "lepido",
-    grado: "Bajo", fk: "baja", facies: ["Esquistos verdes"],
-    comp: "Talco, carbonatos, magnetita, silicatos de Mg",
-    kComp: "talco, carbonato, magnetita, silicato|mg|magnesio",
-    proto: "Rocas máficas, ultramáficas y otras ricas en Mg",
-    kProto: "mafica, ultramafica, mg|magnesio",
-    diag: "Brillo graso, estructura foliada, baja dureza",
-    kDiag: "brillo graso|graso|jabon, foliad, baja dureza|blando|dureza",
-    pista: "Crema/blanquecino a gris-verdoso, aspecto estriado y jabonoso.",
-    clave: "Brillo graso + baja dureza (se raya con la uña)."
+    id: "talco", nombre: "Esquisto de talco", alias: ["Talcoesquisto"], grupo: "F",
+    tipo: T_REG, foli: 0, textura: "Lepidoblástica", kText: ["Lepidoblástica|lepido"],
+    grado: "Bajo", facies: [F_EV],
+    comp: ["Talco", "Carbonatos|carbonato", "Magnetita", "Silicatos de Mg|silicato|magnesio|mg"],
+    proto: ["Rocas máficas|mafica", "Rocas ultramáficas|ultramafica", "Rocas ricas en Mg|ricas en mg|magnesio"],
+    diag: ["Brillo graso|graso", "Estructura foliada|foliad", "Baja dureza|dureza|blando"],
+    pista: "Crema o gris-verdoso, aspecto estriado y jabonoso.",
+    clave: "Brillo graso y baja dureza."
   },
   {
-    id: "andalucita", nombre: "Esquisto de andalucita", alias: ["Esquisto de quiastolita", "quiastolita"], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Porfidoblástica", kText: "porfido",
-    grado: "Medio-alto", gradoOk: ["Medio", "Medio-alto"], fk: "alta", facies: ["Epidota-anfíbol"],
-    comp: "Quiastolita-andalucita, cuarzo, micas, granates",
-    kComp: "andalucita|quiastolita, cuarzo|qz, mica, granate",
-    proto: "Sedimentos arcillosos, pizarra, limonita (sic; limolita)",
-    kProto: "arcillos, pizarra, limonita|limolita",
-    diag: "Foliación penetrativa, textura esquistosa, presencia de andalucita",
-    kDiag: "penetrativa, esquistosa, andalucita|quiastolita",
-    pista: "Fondo gris oscuro con cristales alargados blancos/crema (porfidoblastos). En la sección se ve una cruz oscura.",
-    clave: "Si se le ve la CRUZ, se llama esquisto de QUIASTOLITA (variedad de andalucita).",
-    nota: "Mismo cajón de la foto: el PPT dice 'si se le ve la cruz, queda como esquisto de quiastolita'."
+    id: "andalucita", nombre: "Esquisto de andalucita", alias: ["Esquisto de quiastolita", "Quiastolita"], grupo: "F",
+    tipo: T_REG, foli: 0, textura: "Porfidoblástica", kText: ["Porfidoblástica|porfido"],
+    grado: "Medio-alto", facies: [F_EA],
+    comp: ["Andalucita (quiastolita)|andalucita|quiastolita", "Cuarzo|qz", "Micas|mica", "Granates|granate"],
+    proto: ["Sedimentos arcillosos|arcilloso|arcilla", "Pizarra", "Limonita|limolita"],
+    diag: [D_PEN, D_ESQ, "Presencia de andalucita|andalucita|quiastolita"],
+    pista: "Fondo gris oscuro con cristales alargados blancos o crema.",
+    clave: "Si se le ve la cruz, se llama esquisto de quiastolita.",
+    nota: "Según el PPT: si se le ve la cruz, queda como esquisto de quiastolita. Se aceptan ambos nombres."
   },
   {
-    id: "granate", nombre: "Esquisto de granate", alias: ["granatifero"], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Porfidoblástica", kText: "porfido",
-    grado: "Medio-alto", gradoOk: ["Medio", "Medio-alto"], fk: "alta", facies: ["Epidota-anfíbol"],
-    comp: "Granate, micas, feldespatos, hornblenda, cuarzo",
-    kComp: "granate, mica, feldespato|feld|fsp, hornblenda, cuarzo|qz",
-    proto: "Roca pelítica, granito",
-    kProto: "pelitic|pelita, granito",
-    diag: "Foliación penetrativa, textura esquistosa, presencia de granates",
-    kDiag: "penetrativa, esquistosa, granate",
-    pista: "Porfidoblastos oscuros (rojizo-negros) redondeados. En tu cajón hay 'con mica' (plateada, brillante) y 'sin mica' (verdosa-parda).",
+    id: "granate", nombre: "Esquisto de granate", alias: [], grupo: "F",
+    tipo: T_REG, foli: 0, textura: "Porfidoblástica", kText: ["Porfidoblástica|porfido"],
+    grado: "Medio-alto", facies: [F_EA],
+    comp: ["Granate", "Micas|mica", "Feldespatos|feldespato|feld|fsp", "Hornblenda", "Cuarzo|qz"],
+    proto: ["Roca pelítica|pelitic|pelita", "Granito"],
+    diag: [D_PEN, D_ESQ, "Presencia de granates|granate"],
+    pista: "Puntos oscuros redondeados; en tu cajón hay 'con mica' y 'sin mica'.",
     clave: "Puntos oscuros redondeados (granates) en matriz foliada."
   },
   {
-    id: "mica", nombre: "Esquisto de mica", alias: ["micaesquisto", "esquisto micaceo"], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Lepidoblástica", kText: "lepido",
-    grado: "Bajo", fk: "baja", facies: ["Esquistos verdes"],
-    comp: "Mica, clorita, cuarzo, feldespato, turmalina, epidota, calcita",
-    kComp: "mica, clorita, cuarzo|qz, feldespato|feld|fsp, turmalina, epidota, calcita",
-    proto: "Pizarra, argilita, limolita, arenisca, lutita, riolita, toba",
-    kProto: "pizarra, argilita, limolita, arenisca, lutita, riolita, toba",
-    diag: "Foliación penetrativa, textura esquistosa, presencia de micas",
-    kDiag: "penetrativa, esquistosa, mica",
-    pista: "Brillo plateado/dorado de láminas de mica visibles a simple vista.",
-    clave: "Mucho brillo de micas visibles (más grueso que filita)."
+    id: "mica", nombre: "Esquisto de mica", alias: ["Micaesquisto"], grupo: "F",
+    tipo: T_REG, foli: 0, textura: "Lepidoblástica", kText: ["Lepidoblástica|lepido"],
+    grado: "Bajo", facies: [F_EV],
+    comp: ["Mica", "Clorita", "Cuarzo|qz", "Feldespato|feld|fsp", "Turmalina", "Epidota", "Calcita"],
+    proto: ["Pizarra", "Argilita", "Limolita", "Arenisca", "Lutita", "Riolita", "Toba"],
+    diag: [D_PEN, D_ESQ, "Presencia de micas|mica"],
+    pista: "Brillo plateado o dorado de láminas de mica.",
+    clave: "Mucha mica visible."
   },
   {
-    id: "verde", nombre: "Esquisto verde", alias: ["esquisto de clorita"], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Lepidoblástica", kText: "lepido",
-    grado: "Bajo", fk: "baja", facies: ["Esquistos verdes"],
-    comp: "Albita, clorita, actinolita, epidota, feldespato, cuarzo",
-    kComp: "albita, clorita, actinolita, epidota, feldespato|feld|fsp, cuarzo|qz",
-    proto: "Basalto, andesita, toba",
-    kProto: "basalto, andesita, toba",
-    diag: "Foliación penetrativa, textura esquistosa, presencia de minerales verdes",
-    kDiag: "penetrativa, esquistosa, verde",
-    pista: "Gris-verdoso oscuro, foliación fina, brillo sedoso débil.",
-    clave: "Minerales verdes (clorita, actinolita, epidota); protolito máfico.",
+    id: "verde", nombre: "Esquisto verde", alias: [], grupo: "F",
+    tipo: T_REG, foli: 0, textura: "Lepidoblástica", kText: ["Lepidoblástica|lepido"],
+    grado: "Bajo", facies: [F_EV],
+    comp: ["Albita", "Clorita", "Actinolita", "Epidota", "Feldespato|feld|fsp", "Cuarzo|qz"],
+    proto: ["Basalto", "Andesita", "Toba"],
+    diag: [D_PEN, D_ESQ, "Presencia de minerales verdes|verde"],
+    pista: "Gris-verdoso oscuro, foliación fina.",
+    clave: "Minerales verdes (clorita, actinolita, epidota); protolito basalto/andesita/toba."
   },
   {
     id: "albita", nombre: "Esquisto de albita", alias: [], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Nematolepidoblástica", kText: "nemato|lepido",
-    grado: "Medio-alto", gradoOk: ["Bajo", "Medio", "Medio-alto"], fk: "media", facies: ["Esquistos verdes"],
-    comp: "Albita, clorita, cuarzo y actinolita",
-    kComp: "albita, clorita, cuarzo|qz, actinolita",
-    proto: "Rocas máficas",
-    kProto: "mafica",
-    diag: "Foliación penetrativa, textura esquistosa, se observan puntos anaranjados",
-    kDiag: "penetrativa, esquistosa, naranja|anaranjad",
-    pista: "Gris-pardo, granuda, con puntos anaranjados (óxido) y brillo sedoso.",
-    clave: "Puntos ANARANJADOS; textura nematolepidoblástica.",
-    nota: "⚠ En el PPT dice 'medio-alto grado' pero facie de esquistos verdes (que es de bajo grado). Respeta lo que dice tu profesora."
+    tipo: T_REG, foli: 0, textura: "Nematolepidoblástica", kText: ["Nematolepidoblástica|nemato|lepido"],
+    grado: "Medio-alto", facies: [F_EV],
+    comp: ["Albita", "Clorita", "Cuarzo|qz", "Actinolita"],
+    proto: ["Rocas máficas|mafica"],
+    diag: [D_PEN, D_ESQ, "Puntos anaranjados|naranja|anaranjad"],
+    pista: "Gris-pardo con puntos anaranjados.",
+    clave: "Puntos anaranjados y textura nematolepidoblástica.",
+    nota: "⚠ El PPT dice 'medio-alto grado' pero 'facie de esquistos verdes'. Anótalo tal como está en el PPT."
   },
   {
     id: "sillimanita", nombre: "Esquisto de sillimanita", alias: [], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Nematoblástica", kText: "nemato",
-    grado: "Alto", fk: "alta", facies: ["Anfibolita", "Granulita"], faciesDeducida: true,
-    comp: "Sillimanita (+ micas y cuarzo)",
-    kComp: "sillimanita",
-    proto: "Sedimentos arcillosos, pizarra, limolitas",
-    kProto: "arcillos, pizarra, limolita",
-    diag: "Presencia de sillimanita, estructura foliada, textura nematoblástica",
-    kDiag: "sillimanita, foliad, nemato",
-    pista: "Nódulos blancos redondeados que sobresalen sobre fondo negro (aspecto 'granuloso').",
-    clave: "Indicador de ALTO grado: sillimanita + textura nematoblástica.",
-    nota: "⚠ El PPT no indica facie para esta roca. Alto grado → anfibolita/granulita (deducido; confírmalo)."
+    tipo: T_REG, foli: 0, textura: "Nematoblástica", kText: ["Nematoblástica|nemato"],
+    grado: "Alto", facies: [],
+    comp: ["Sillimanita"],
+    proto: ["Sedimentos arcillosos|arcilloso|arcilla", "Pizarra", "Limolitas|limolita"],
+    diag: ["Presencia de sillimanita|sillimanita", "Estructura foliada|foliad", "Textura nematoblástica|nemato"],
+    pista: "Nódulos blancos redondeados sobre fondo negro.",
+    clave: "Sillimanita + textura nematoblástica; alto grado.",
+    nota: "El PPT no indica facie para esta roca: va vacío / no aplica."
   },
   {
     id: "estaurolita", nombre: "Esquisto de estaurolita", alias: [], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Nematoblástica", kText: "nemato",
-    grado: "Alto", gradoOk: ["Medio-alto", "Alto"], fk: "alta", facies: ["Epidota-anfíbol", "Anfibolita"], faciesDeducida: true,
-    comp: "Estaurolita, micas",
-    kComp: "estaurolita, mica",
-    proto: "Sedimentos arcillosos, pizarra, limolitas",
-    kProto: "arcillos, pizarra, limolita",
-    diag: "Presencia de estaurolita, estructura foliada, textura nematoblástica",
-    kDiag: "estaurolita, foliad, nemato",
-    pista: "Gris con cristales prismáticos oscuros/pardos de estaurolita que resaltan.",
-    clave: "Estaurolita (prismas) + micas; alto grado.",
-    nota: "⚠ El PPT no indica facie. Estaurolita aparece en epidota-anfíbol/anfibolita (deducido; confírmalo)."
+    tipo: T_REG, foli: 0, textura: "Nematoblástica", kText: ["Nematoblástica|nemato"],
+    grado: "Alto", facies: [],
+    comp: ["Estaurolita", "Micas|mica"],
+    proto: ["Sedimentos arcillosos|arcilloso|arcilla", "Pizarra", "Limolitas|limolita"],
+    diag: ["Presencia de estaurolita|estaurolita", "Estructura foliada|foliad", "Textura nematoblástica|nemato"],
+    pista: "Gris con cristales prismáticos oscuros que resaltan.",
+    clave: "Estaurolita + micas; alto grado.",
+    nota: "El PPT no indica facie para esta roca: va vacío / no aplica."
   },
   {
-    id: "grafito", nombre: "Esquisto de grafito", alias: ["grafitico"], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Lepidoblástica", kText: "lepido",
-    grado: "Medio-alto", gradoOk: ["Medio", "Medio-alto"], fk: "alta", facies: ["Epidota-anfíbol", "Anfibolita", "Esquistos verdes"], faciesDeducida: true,
-    comp: "Grafito, micas, cuarzo",
-    kComp: "grafito, mica, cuarzo|qz",
-    proto: "Sedimentos con Ca y Fe, limolitas, pizarras, rocas ígneas máficas e intermedias",
-    kProto: "limolita, pizarra, mafica, intermedia|sediment",
-    diag: "Mancha los dedos, brillo metálico, tacto graso",
-    kDiag: "mancha, metalic, graso|tacto",
-    pista: "Negra, brillo metálico azulado, superficie lisa que se ve 'engrasada'.",
-    clave: "MANCHA LOS DEDOS + brillo metálico + tacto graso.",
-    nota: "⚠ El PPT no indica facie para esta roca (solo medio-alto grado)."
+    id: "grafito", nombre: "Esquisto de grafito", alias: [], grupo: "F",
+    tipo: T_REG, foli: 0, textura: "Lepidoblástica", kText: ["Lepidoblástica|lepido"],
+    grado: "Medio-alto", facies: [],
+    comp: ["Grafito", "Micas|mica", "Cuarzo|qz"],
+    proto: ["Sedimentos con Ca y Fe|sedimento|ca y fe", "Limolitas|limolita", "Pizarras|pizarra", "Rocas ígneas máficas|mafica", "Rocas ígneas intermedias|intermedia"],
+    diag: ["Mancha los dedos|mancha", "Brillo metálico|metalico", "Tacto graso|graso"],
+    pista: "Negra, brillo metálico, superficie lisa.",
+    clave: "Mancha los dedos, brillo metálico y tacto graso.",
+    nota: "El PPT no indica facie para esta roca: va vacío / no aplica."
   },
   {
-    id: "serpentina", nombre: "Esquisto de serpentina", alias: ["serpentinita"], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Lepidoblástica", kText: "lepido",
-    grado: "Medio-alto", gradoOk: ["Bajo", "Medio", "Medio-alto"], fk: "media", facies: ["Esquistos verdes"],
-    comp: "Según PPT: albita, clorita, cuarzo y actinolita. (Lo típico de esta roca: serpentina, talco, magnetita, clorita)",
-    kComp: "albita|serpentina, clorita, cuarzo|talco|magnetita, actinolita|magnetita",
-    proto: "Rocas ultramáficas, dunitas y peridotitas",
-    kProto: "ultramafica, dunita, peridotita",
-    diag: "Foliación penetrativa, color verde, tacto graso",
-    kDiag: "penetrativa, verde, graso|tacto",
-    pista: "Verde azulado, aspecto fibroso-sedoso, tacto jabonoso.",
-    clave: "Verde + tacto graso; protolito ULTRAmáfico (dunita/peridotita).",
-    nota: "⚠ La composición del PPT es idéntica a la del esquisto de albita (parece copia). Anótala como está en el PPT, pero ten presente que el mineral que da el nombre es la serpentina."
+    id: "serpentina", nombre: "Esquisto de serpentina", alias: ["Serpentinita"], grupo: "F",
+    tipo: T_REG, foli: 0, textura: "Lepidoblástica", kText: ["Lepidoblástica|lepido"],
+    grado: "Medio-alto", facies: [F_EV],
+    comp: ["Albita", "Clorita", "Cuarzo|qz", "Actinolita"],
+    compExtra: ["serpentina", "antigorita", "talco", "magnetita"],
+    proto: ["Rocas ultramáficas|ultramafica", "Dunitas|dunita", "Peridotitas|peridotita"],
+    diag: [D_PEN, "Color verde|verde", "Tacto graso|graso"],
+    pista: "Verde azulado, aspecto fibroso-sedoso.",
+    clave: "Verde y tacto graso; protolito ultramáfico (dunita, peridotita).",
+    nota: "⚠ La composición del PPT es idéntica a la del esquisto de albita (parece copia). Aquí se corrige con lo que dice el PPT, pero también se acepta serpentina, talco o magnetita."
   },
   {
-    id: "gneiss", nombre: "Gneiss", alias: ["gneis", "neis"], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Bandeada (gnéisica)", kText: "bandead|gneis|gnei",
-    grado: "Medio-alto", gradoOk: ["Medio-alto", "Alto"], fk: "alta", facies: ["Anfibolita", "Epidota-anfíbol", "Granulita"],
-    comp: "Cuarzo, feldespato, biotita, hornblenda, turmalina, granate, magnetita, ilmenita",
-    kComp: "cuarzo|qz, feldespato|feld|fsp, biotita, hornblenda, turmalina, granate, magnetita, ilmenita",
-    proto: "Rocas ígneas félsicas, areniscas",
-    kProto: "felsica|granit, arenisca",
-    diag: "Textura bandeada, alternancia de bandas oscuras y claras, minerales visibles",
-    kDiag: "bandead, alternancia|oscura|clara, mineral",
-    pista: "Moteado blanco y negro, grano grueso, bandas de félsicos y máficos.",
-    clave: "Bandas claras (cuarzo-feldespato) y oscuras (biotita-hornblenda) con minerales visibles."
+    id: "gneiss", nombre: "Gneiss", alias: ["Gneis", "Neis"], grupo: "F",
+    tipo: T_REG, foli: 0, textura: "Bandeada", kText: ["Bandeada|bandead|gneis|gnei"],
+    grado: "Medio-alto", facies: [F_AN, F_EA, F_GR],
+    comp: ["Cuarzo|qz", "Feldespato|feld|fsp", "Biotita", "Hornblenda", "Turmalina", "Granate", "Magnetita", "Ilmenita"],
+    proto: ["Rocas ígneas félsicas|felsica", "Areniscas|arenisca"],
+    diag: ["Textura bandeada|bandead", "Alternancia de bandas oscuras y claras|alternancia|bandas oscuras", "Minerales visibles|visible"],
+    pista: "Moteado blanco y negro, bandas de grano grueso.",
+    clave: "Bandas claras y oscuras con minerales visibles."
   },
   {
-    id: "metarenita", nombre: "Metarenita", alias: ["metarenisca"], grupo: "F",
-    tipo: "Regional", foli: 0, textura: "Lepidoblástica", kText: "lepido",
-    grado: "Bajo", fk: "baja", facies: ["Esquistos verdes"],
-    comp: "Cuarzo afanítico, feldespato, clorita, minerales arcillosos",
-    kComp: "cuarzo|qz, feldespato|feld|fsp, clorita, arcill",
-    proto: "Arenisca",
-    kProto: "arenisca",
-    diag: "Aspecto de arenisca con granos alineados, foliación incipiente, puede presentar alternancia de bandas oscuras y claras",
-    kDiag: "arenisca, alineado, incipiente|foliacion",
-    pista: "Beige-pardo, grano fino tipo arenisca pero con leve alineación.",
-    clave: "Parece arenisca pero con foliación incipiente."
+    id: "metarenita", nombre: "Metarenita", alias: [], grupo: "F",
+    tipo: T_REG, foli: 0, textura: "Lepidoblástica", kText: ["Lepidoblástica|lepido"],
+    grado: "Bajo", facies: [F_EV],
+    comp: ["Cuarzo afanítico|cuarzo|qz", "Feldespato|feld|fsp", "Clorita", "Minerales arcillosos|arcilla"],
+    proto: ["Arenisca"],
+    diag: ["Aspecto de arenisca|arenisca", "Granos alineados|alineado", "Foliación incipiente|incipiente", "Alternancia de bandas oscuras y claras|alternancia"],
+    pista: "Beige-pardo, grano fino tipo arenisca.",
+    clave: "Parece arenisca, pero con foliación incipiente."
   },
   {
     id: "migmatita", nombre: "Migmatita", alias: [], grupo: "N",
-    tipo: "Regional con magmatismo", foli: 1, textura: "Bandeada (y plegada)", kText: "bandead|plegad",
-    grado: "Alto", gradoOk: ["Medio-alto", "Alto"], fk: "alta", facies: ["Anfibolita"],
-    comp: "Cuarzo, feldespato, biotita, hornblenda",
-    kComp: "cuarzo|qz, feldespato|feld|fsp, biotita, hornblenda",
-    proto: "Mezcla de rocas ígneas félsicas con sedimento",
-    kProto: "igneas|felsica|granit, sediment",
-    diag: "Textura bandeada y plegada, alternancia de bandas oscuras y claras, aspecto de granitoide",
-    kDiag: "bandead, plegad, granitoide|alternancia",
-    pista: "Bandas plegadas (pliegues complejos) claras y oscuras, aspecto granítico.",
-    clave: "Roca MIXTA: parte metamórfica + parte fundida (granitoide), bandas plegadas.",
-    nota: "El PPT la ubica en 'rocas no foliadas'. Foto: del PPT (aún no tienes una tuya)."
+    tipo: "Regional con magmatismo|regional con magmatismo|regional", foli: 1, textura: "Bandeada", kText: ["Bandeada|bandead"],
+    grado: null, facies: [F_AN],
+    comp: ["Cuarzo|qz", "Feldespato|feld|fsp", "Biotita", "Hornblenda"],
+    proto: ["Rocas ígneas félsicas|felsica", "Sedimento"],
+    diag: ["Textura bandeada|bandead", "Textura plegada|plegad", "Alternancia de bandas oscuras y claras|alternancia", "Aspecto de granitoide|granitoide"],
+    pista: "Bandas plegadas claras y oscuras.",
+    clave: "Mezcla de roca ígnea félsica con sedimento; bandeada y plegada.",
+    nota: "El PPT la ubica dentro de las rocas no foliadas. El PPT no indica el grado."
   },
   {
-    id: "marmol", nombre: "Mármol", alias: ["marmol"], grupo: "N",
-    tipo: "Contacto", foli: 1, textura: "Granoblástica bandeada", kText: "granoblast|grano|bandead",
-    grado: "Alto", gradoOk: ["Medio", "Medio-alto", "Alto"], fk: "contacto", facies: ["Corneana de piroxeno"],
-    comp: "Calcita, dolomita, carbonatos",
-    kComp: "calcita, dolomita|dolomia, carbonato",
-    proto: "Caliza o dolomía",
-    kProto: "caliza, dolomia",
-    diag: "Textura bandeada, efervescencia con HCl, color claro",
-    kDiag: "bandead, hcl|efervescencia|acido, claro|blanco|color",
-    pista: "Bandas crema, naranja y rosado-rojizo; granudo-sacaroídeo.",
-    clave: "Reacciona con HCl (efervescencia); protolito caliza/dolomía."
+    id: "marmol", nombre: "Mármol", alias: ["Marmol"], grupo: "N",
+    tipo: T_CON, foli: 1, textura: "Granoblástica bandeada", kText: ["Granoblástica|granoblast", "Bandeada|bandead"],
+    grado: null, facies: [F_CP],
+    comp: ["Calcita", "Dolomita", "Carbonatos|carbonato"],
+    proto: ["Caliza", "Dolomía|dolomia"],
+    diag: ["Textura bandeada|bandead", "Efervescencia con HCl|efervescencia|hcl", "Color claro|claro"],
+    pista: "Bandas crema, naranja y rosado-rojizo.",
+    clave: "Efervescencia con HCl; protolito caliza o dolomía.",
+    nota: "El PPT no indica el grado."
   },
   {
-    id: "cornea", nombre: "Córnea", alias: ["cornubianita", "hornfels", "cornea"], grupo: "N",
-    tipo: "Contacto", foli: 1, textura: "Granoblástica", kText: "granoblast|grano",
-    grado: "Alto", gradoOk: ["Medio-alto", "Alto"], fk: "contacto", facies: ["Corneana de piroxeno", "Sanidinita"],
-    comp: "Micas, granate, piroxeno, cordierita, andalucita, cuarzo, feldespato, carbonato y otros",
-    kComp: "mica, granate, piroxeno, cordierita, andalucita, cuarzo|qz, feldespato|feld|fsp, carbonato",
-    proto: "Areniscas, basaltos, calizas, rocas pelíticas",
-    kProto: "arenisca, basalto, caliza, pelitic|pelita",
-    diag: "Aspecto masivo, fractura concoidea, alta dureza",
-    kDiag: "masivo, concoid, dureza",
-    pista: "Gris-verdosa oscura, masiva, sin foliación, fractura lisa/concoidea, muy dura.",
-    clave: "MASIVA + fractura concoidea + muy dura; metamorfismo de contacto.",
-    nota: "Foto del PPT mientras agregas la tuya (usa el botón 'Agregar mi foto' en la ficha)."
+    id: "cornea", nombre: "Córnea", alias: ["Cornea", "Cornubianita", "Hornfels"], grupo: "N",
+    tipo: T_CON, foli: 1, textura: "Granoblástica", kText: ["Granoblástica|granoblast"],
+    grado: null, facies: [F_CP, F_SA],
+    comp: ["Micas|mica", "Granate", "Piroxeno", "Cordierita", "Andalucita", "Cuarzo|qz", "Feldespato|feld|fsp", "Carbonato"],
+    proto: ["Areniscas|arenisca", "Basaltos|basalto", "Calizas|caliza", "Rocas pelíticas|pelitic|pelita"],
+    diag: ["Aspecto masivo|masivo", "Fractura concoidea|concoid", "Alta dureza|dureza"],
+    pista: "Gris-verdosa oscura, masiva, muy dura.",
+    clave: "Aspecto masivo, fractura concoidea y alta dureza.",
+    nota: "El PPT no indica el grado."
   },
   {
-    id: "cuarcita", nombre: "Cuarcita", alias: ["cuarzita"], grupo: "N",
-    tipo: "Contacto", foli: 1, textura: "Granoblástica", kText: "granoblast|grano",
-    grado: "Medio", gradoOk: ["Medio", "Medio-alto"], fk: "contacto", facies: ["Anfibolita"],
-    comp: "Cuarzo, granate, micas",
-    kComp: "cuarzo|qz, granate, mica",
-    proto: "Areniscas, pedernal, cuarzoarenita",
-    kProto: "arenisca, pedernal, cuarzoarenita|cuarzo arenita|ortocuarcita",
-    diag: "Presencia de cuarzo, alta dureza, textura granoblástica",
-    kDiag: "cuarzo, dureza, granoblast",
-    pista: "Muy dura, rosada/rojiza, beige o gris; brillo vítreo y aspecto sacaroídeo.",
-    clave: "Casi todo cuarzo → altísima dureza; protolito arenisca/pedernal."
+    id: "cuarcita", nombre: "Cuarcita", alias: ["Cuarzita"], grupo: "N",
+    tipo: T_CON, foli: 1, textura: "Granoblástica", kText: ["Granoblástica|granoblast"],
+    grado: null, facies: [F_AN],
+    comp: ["Cuarzo|qz", "Granate", "Micas|mica"],
+    proto: ["Areniscas|arenisca", "Pedernal", "Cuarzoarenita|cuarzo arenita"],
+    diag: ["Presencia de cuarzo|cuarzo", "Alta dureza|dureza", "Textura granoblástica|granoblast"],
+    pista: "Muy dura; rosada, beige o gris.",
+    clave: "Casi todo cuarzo: alta dureza.",
+    nota: "El PPT no indica el grado."
   },
   {
-    id: "skarn", nombre: "Skarn", alias: ["escarn"], grupo: "N",
-    tipo: "Metasomatismo", foli: 1, textura: "Granoblástica", kText: "granoblast|grano",
-    grado: "No aplica", fk: "metaso", facies: ["Sin facie / no aplica"],
-    comp: "Granate, wollastonita, diópsido",
-    kComp: "granate, wollastonita, diopsido",
-    proto: "Basalto, gabro, toba (según PPT; típicamente caliza/dolomía en contacto con un intrusivo)",
-    kProto: "basalto, gabro, toba|caliza|dolomia",
-    diag: "Presencia de minerales calcosilicatados, alta dureza, textura granoblástica",
-    kDiag: "calcosilicat, dureza, granoblast",
-    pista: "Blanco/gris con puntos verdes (diópsido) y marrón-rojizos (granate).",
-    clave: "METASOMATISMO + calcosilicatos (granate, wollastonita, diópsido). No tiene facie.",
-    nota: "⚠ El PPT da basalto/gabro/toba como protolitos. En la literatura el protolito típico es caliza/dolomía; anota lo que dice el PPT."
+    id: "skarn", nombre: "Skarn", alias: ["Escarn"], grupo: "N",
+    tipo: "Metasomatismo|metasomatismo", foli: 1, textura: "Granoblástica", kText: ["Granoblástica|granoblast"],
+    grado: null, facies: [], faciesTxt: "Ninguna (no se encuentra dentro de ninguna facie)",
+    comp: ["Granate", "Wollastonita", "Diópsido|diopsido"],
+    proto: ["Basalto", "Gabro", "Toba"], protoExtra: ["caliza", "dolomia"],
+    diag: ["Minerales calcosilicatados|calcosilicat", "Alta dureza|dureza", "Textura granoblástica|granoblast"],
+    pista: "Blanco/gris con puntos verdes y marrón-rojizos.",
+    clave: "Metasomatismo; minerales calcosilicatados; no está en ninguna facie.",
+    nota: "⚠ El PPT da basalto, gabro y toba como protolitos. También se acepta caliza o dolomía."
   },
   {
     id: "anfibolita", nombre: "Anfibolita", alias: [], grupo: "N",
-    tipo: "Regional", foli: 1, textura: "Granoblástica", kText: "granoblast|grano",
-    grado: "Medio", gradoOk: ["Medio", "Medio-alto"], fk: "media", facies: ["Anfibolita"],
-    comp: "Anfíbol, plagioclasa",
-    kComp: "anfibol|hornblenda, plagioclasa|plg",
-    proto: "Basalto, gabro, toba",
-    kProto: "basalto, gabro, toba",
-    diag: "Presencia de anfíbol, color negro o gris oscuro, textura granoblástica",
-    kDiag: "anfibol|hornblenda, negro|gris oscuro, granoblast",
-    pista: "Negra o gris oscura, granuda, con cristales de anfíbol; sin bandas marcadas.",
-    clave: "Anfíbol + plagioclasa, color oscuro; protolito máfico.",
-    nota: "El PPT no especifica el tipo de metamorfismo (se deduce regional). Foto: del PPT (aún no tienes una tuya)."
+    tipo: null, foli: 1, textura: "Granoblástica", kText: ["Granoblástica|granoblast"],
+    grado: "Medio", facies: [F_AN],
+    comp: ["Anfíbol|anfibol|hornblenda", "Plagioclasa|plg"],
+    proto: ["Basalto", "Gabro", "Toba"],
+    diag: ["Presencia de anfíbol|anfibol", "Color negro o gris oscuro|negro|gris oscuro", "Textura granoblástica|granoblast"],
+    pista: "Negra o gris oscura, granuda.",
+    clave: "Anfíbol + plagioclasa; color negro o gris oscuro.",
+    nota: "El PPT no indica el tipo de metamorfismo: va vacío / no aplica."
   },
   {
     id: "milonita", nombre: "Milonita", alias: [], grupo: "C",
-    tipo: "Dislocación (dinámico)", foli: 2, textura: "Porfidoclástica, milonítica", kText: "milonit|porfidoclast",
-    grado: "No aplica", fk: "dislocacion", facies: ["Sin facie / no aplica"],
-    comp: "Cuarzo y feldespatos",
-    kComp: "cuarzo|qz, feldespato|feld|fsp",
-    proto: "Cualquier clase de roca",
-    kProto: "cualquier|todas|cualquiera|toda",
-    diag: "Minerales orientados, textura milonítica, bandas oscuras y negras",
-    kDiag: "orientad, milonit, banda",
-    pista: "Bandas finas, alargadas y paralelas, claras y oscuras; aspecto 'estirado'.",
-    clave: "Única con textura CLÁSTICA (porfidoclástica); metamorfismo de dislocación/falla.",
-    nota: "El PPT no da facie ni grado (es dinámico, asociado a fallas)."
+    tipo: "Dislocación (dinámico)|dislocacion|dinamico|cataclastico|cataclasis", foli: 2, textura: "Porfidoclástica, milonítica", kText: ["Porfidoclástica|porfidoclast", "Milonítica|milonit"],
+    grado: null, facies: [],
+    comp: ["Cuarzo|qz", "Feldespatos|feldespato|feld|fsp"],
+    proto: ["Cualquier clase de roca|cualquier|toda"],
+    diag: ["Minerales orientados|orientad", "Textura milonítica|milonit", "Bandas oscuras y negras|banda"],
+    pista: "Bandas finas, alargadas y paralelas.",
+    clave: "Única con textura clástica (porfidoclástica); metamorfismo de dislocación.",
+    nota: "El PPT no indica grado ni facie: van vacío / no aplica."
   }
 ];
 
 const GRUPOS = { F: "Foliadas", N: "No foliadas", C: "Cataclásticas" };
 
-// Conceptos del PPT (para la pestaña Claves)
 const CONCEPTOS = [
   ["¿Qué es el metamorfismo?", "Proceso subsólido que produce cambios texturales, composicionales y mineralógicos de una roca en respuesta al cambio de condiciones físicas y/o químicas."],
-  ["Metamorfismo de contacto", "Local. Afecta a las rocas alrededor de un cuerpo magmático, por el flujo de calor del magma."],
+  ["Metamorfismo de contacto", "Local. Afecta a las rocas alrededor de un cuerpo magmático, producido por el flujo de calor del cuerpo magmático."],
   ["Metamorfismo regional", "Afecta a un gran volumen de roca; asociado a procesos tectónicos de gran escala."],
-  ["Metamorfismo de dislocación / cataclástico", "Local, asociado a fallas. Se caracteriza por la reducción del tamaño de grano."],
+  ["Metamorfismo de dislocación o cataclástico", "Local, asociado a fallas. Se caracteriza por la reducción del tamaño de grano."],
   ["Rocas foliadas", "Cristales o componentes orientados en capas o franjas, producto de esfuerzos."],
   ["Rocas no foliadas", "Cristales o componentes sin orientación preferencial."],
-  ["Textura -blástica", "Se obtuvo DURANTE el metamorfismo. La mayoría de las rocas la tiene."],
-  ["Textura -clástica", "Se obtuvo PREVIO al metamorfismo. Solo la tiene la milonita."],
+  ["Textura -blástica", "Se obtuvo durante el metamorfismo. La mayoría de las rocas la presenta."],
+  ["Textura -clástica", "Se obtuvo previo al metamorfismo. Solo la tiene la milonita."],
   ["Lepido-", "Micas orientadas."],
   ["Grano-", "Granos equigranulares en rocas no foliadas."],
   ["Pórfido-", "Granos de gran tamaño en una matriz fina."],
   ["Nemato-", "Cristales prismáticos orientados."],
   ["Bandeado", "Minerales por bandas."],
-  ["Combinaciones", "Una roca puede tener más de una textura (ej.: lepidonematoblástica)."]
+  ["Combinaciones", "Una roca puede presentar más de una textura. Ejemplo: lepidonematoblástica."]
 ];
 </script>
 <script>// ====== UTILIDADES ======
@@ -449,6 +378,11 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const byId = id => ROCAS.find(r => r.id === id);
+const lab = a => a.split("|")[0].trim();
+const labs = arr => arr.map(lab).join(", ");
+const altsOf = a => a.split("|").map(x => norm(x)).filter(Boolean);
+const VAC = "Vacío / no aplica (el PPT no lo indica)";
+const orVac = v => v || "—";
 
 const ABBR = [[/\bqz\b/g, "cuarzo"], [/\b(fsp|feld)\b/g, "feldespato"], [/\bmxs\b/g, "minerales"], [/\bmx\b/g, "mineral"], [/\brxs\b/g, "rocas"], [/\bplg\b/g, "plagioclasa"]];
 function norm(s) {
@@ -555,7 +489,7 @@ function filtered() {
     if (F.g === "rep" && !ST.rep[r.id]) return false;
     if (F.g === "dom" && !ST.dom[r.id]) return false;
     if (F.g === "nuevas" && ST.dom[r.id]) return false;
-    if (q) { const hay = norm([r.nombre, r.alias.join(" "), r.comp, r.textura, r.facies.join(" "), r.tipo, r.diag].join(" ")); if (!hay.includes(q)) return false; }
+    if (q) { const hay = norm([r.nombre, r.alias.join(" "), labs(r.comp), labs(r.proto), labs(r.diag), r.textura, r.facies.map(lab).join(" "), r.tipo ? lab(r.tipo) : ""].join(" ")); if (!hay.includes(q)) return false; }
     return true;
   });
 }
@@ -566,16 +500,16 @@ function drawGrid() {
       ${imgTag(r.id, "ph")}
       ${ST.dom[r.id] ? '<span class="badge ok">✓</span>' : ST.rep[r.id] ? '<span class="badge rep">↻</span>' : ""}
       ${isProvisional(r.id) ? '<span class="badge ppt">foto PPT</span>' : ""}
-      <div class="nm">${esc(r.nombre)}<small>${GRUPOS[r.grupo]} · ${esc(r.tipo)}</small></div>
+      <div class="nm">${esc(r.nombre)}<small>${GRUPOS[r.grupo]}${r.tipo ? " · " + esc(lab(r.tipo)) : ""}</small></div>
     </div>`).join("") : `<div class="empty" style="grid-column:1/-1">No hay rocas con ese filtro.</div>`;
 }
 
 let openId = null;
 function openRock(id) {
   openId = id;
-  const r = byId(id), fi = FACIES_INFO[r.facies[0]] || {};
+  const r = byId(id);
   const idx = ROCAS.findIndex(x => x.id === id);
-  const faciesTxt = r.facies.join(" / ");
+  const faciesTxt = r.facies.length ? r.facies.map(lab).join(" / ") : (r.faciesTxt || "— (el PPT no la indica)");
   const m = document.createElement("div"); m.className = "modal"; m.id = "modal";
   m.innerHTML = `<div class="sheet">
     <button class="btn sec sm close" data-act="close">✕ Cerrar</button>
@@ -588,16 +522,15 @@ function openRock(id) {
     <h2>${esc(r.nombre)}</h2>
     <div class="sub">${GRUPOS[r.grupo]}${r.alias.length ? " · también: " + esc(r.alias.join(", ")) : ""}</div>
     ${r.nota ? `<div class="note">${esc(r.nota)}</div>` : ""}
-    <div class="fld key"><b class="k">🔑 Dato clave para reconocerla</b>${esc(r.clave)}</div>
-    <div class="fld"><b class="k">En la muestra (fotos)</b>${esc(r.pista)}</div>
-    <div class="fld gate"><b class="k">Composición mineralógica — si no la sabes, todo lo demás vale 0</b>${esc(r.comp)}</div>
-    <div class="fld"><b class="k">Tipo de metamorfismo</b>${esc(r.tipo)}</div>
+    <div class="fld key"><b class="k">🔑 Dato clave</b>${esc(r.clave)}</div>
+    <div class="fld gate"><b class="k">Composición mineralógica — si no la sabes, todo lo demás vale 0</b>${esc(labs(r.comp))}</div>
+    <div class="fld"><b class="k">Tipo de metamorfismo</b>${r.tipo ? esc(lab(r.tipo)) : "— (el PPT no lo indica)"}</div>
     <div class="fld"><b class="k">Estructura / Textura</b>${esc(OPC.foli[r.foli])} — ${esc(r.textura)}</div>
-    <div class="fld"><b class="k">Grado y factores de metamorfismo</b>${esc(r.grado)}${r.gradoOk ? "" : ""}<div class="comp">Factores (complemento, no está en el PPT): ${esc(OPC.factor[r.fk])}</div></div>
-    <div class="fld"><b class="k">Facies</b>${esc(faciesTxt)}${r.faciesDeducida ? " <span class='pill'>deducida</span>" : ""}
-      <div class="comp">Mineral crítico de la facie (complemento): ${esc((FACIES_INFO[r.facies[0]] || {}).crit || "—")}</div></div>
-    <div class="fld"><b class="k">Protolitos</b>${esc(r.proto)}</div>
-    <div class="fld"><b class="k">Diagnóstico</b>${esc(r.diag)}</div>
+    <div class="fld"><b class="k">Grado y factores de metamorfismo</b>${r.grado ? esc(r.grado) : "— (el PPT no lo indica)"}<div class="comp">Factores (T° y P): el PPT no los indica.</div></div>
+    <div class="fld"><b class="k">Facies</b>${esc(faciesTxt)}</div>
+    <div class="fld"><b class="k">Protolitos</b>${esc(labs(r.proto))}</div>
+    <div class="fld"><b class="k">Diagnóstico</b>${esc(labs(r.diag))}</div>
+    <div class="fld"><b class="k">Ayuda visual (mía, no es del PPT)</b>${esc(r.pista)}</div>
     <div class="row" style="margin-top:14px">
       <button class="btn ok" data-act="dom">✓ La domino</button>
       <button class="btn sec" data-act="rep">↻ Por repasar</button>
@@ -673,7 +606,7 @@ function qFeedback(ok, r) {
   Q.done = true;
   if (!ok) Q.fail[r.id] = 1; else if (!Q.fail[r.id]) Q.score++;
   if (!ok) setRep(r.id);
-  $("#qfb").innerHTML = `<div class="res ${ok ? "ok" : "bad"}"><div class="h">${ok ? "✓ Correcto" : "✗ Era: " + esc(r.nombre)}</div><div class="c"><b>Clave:</b> ${esc(r.clave)}<br><b>Composición:</b> ${esc(r.comp)}</div></div>
+  $("#qfb").innerHTML = `<div class="res ${ok ? "ok" : "bad"}"><div class="h">${ok ? "✓ Correcto" : "✗ Era: " + esc(r.nombre)}</div><div class="c"><b>Clave:</b> ${esc(r.clave)}<br><b>Composición:</b> ${esc(labs(r.comp))}</div></div>
     <div class="row"><button class="btn" data-act="qnext">Siguiente →</button><button class="btn sec" data-open="${r.id}">Ver ficha</button></div>`;
 }
 function qPick(id) {
@@ -689,64 +622,118 @@ function qCheck(skip) {
 // ====== TEST (simula la tabla del oficio) ======
 let T = null;
 const FIELDS = [["nombre", "Nombre"], ["tipo", "Tipo de metamorfismo"], ["estr", "Estructura / Textura"], ["grado", "Grado y factores"], ["facies", "Facies"], ["comp", "Composición mineralógica"], ["proto", "Protolitos"], ["diag", "Diagnósticos"]];
+const isNA = x => { const s = norm(x); return !s || /^(no aplica|no indica|ninguna|ninguno|sin |vacio|nada|n a|na)\b/.test(s); };
+const atomHit = (inp, atom) => altsOf(atom).some(x => inp.includes(x));
+const atomExact = (sel, atom) => altsOf(atom).includes(norm(sel));
+const classFoli = t => { const s = norm(t); if (/cataclast|milonit|dislocacion/.test(s)) return 2; if (/\b(no|sin)\b/.test(s)) return 1; if (/foliad|exfoliad|esquist/.test(s)) return 0; return -1; };
+const needComp = n => Math.min(3, Math.ceil(n / 2)), needProto = n => Math.min(2, Math.ceil(n / 2)), needDiag = n => Math.min(2, n);
+
 function vTest() {
   if (!T) {
     const nRep = Object.keys(ST.rep).length;
     $("#view").innerHTML = `<h2>Simulador de test</h2>
-      <p class="sub">Igual que el oficio: <b>10 rocas</b> con foto; completas la tabla (nombre, tipo de metamorfismo, estructura/textura, grado y factores, facies, composición, protolitos y diagnóstico). Cada columna vale 1 punto, <b>pero si el nombre o la composición están malos, todo lo demás cuenta como malo.</b></p>
-      <label class="f"><input type="checkbox" id="hints"> Mostrar sugerencias al escribir el nombre (más fácil)</label>
-      <div class="row" style="margin-top:10px"><button class="btn" data-act="tstart">Test de 10 rocas al azar</button>
-      ${nRep ? `<button class="btn sec" data-act="tstartrep">Priorizar mis ${nRep} por repasar</button>` : ""}</div>`;
+      <p class="sub">10 rocas con foto, como el oficio: nombre, tipo de metamorfismo, estructura/textura, grado y factores, facies, composición, protolitos y diagnóstico. Cada columna vale 1 punto, <b>pero si el nombre o la composición están malos, todo lo demás cuenta como malo.</b> Si el PPT no da el dato, la respuesta correcta es dejarlo vacío o poner “no aplica”.</p>
+      <label class="f"><input type="checkbox" id="prio"> Priorizar mis rocas por repasar (${nRep})</label>
+      <label class="f"><input type="checkbox" id="hints"> Rellenar: mostrar sugerencias al escribir el nombre (más fácil)</label>
+      <div class="opts">
+        <button class="opt" data-act="tstart" data-mode="fill"><b>✍️ Rellenar</b><br><span class="sub">Escribes todo de memoria, como en el test real.</span></button>
+        <button class="opt" data-act="tstart" data-mode="mc"><b>🔘 Alternativas</b><br><span class="sub">Eliges el nombre y marcas los minerales, protolitos y diagnósticos que corresponden.</span></button>
+      </div>`;
     return;
   }
   if (T.i >= T.ids.length) return tSummary();
   const id = T.ids[T.i], r = byId(id), a = T.ans[T.i] || {};
-  const dl = T.hints ? `<datalist id="names">${ROCAS.map(x => `<option value="${esc(x.nombre)}">`).join("")}</datalist>` : "";
-  const sel = (idn, arr, val) => `<select id="${idn}"><option value="">—</option>${arr.map(o => `<option ${val === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
-  $("#view").innerHTML = `<div class="row" style="justify-content:space-between"><b>Roca ${T.i + 1} de ${T.ids.length}</b><span class="sub">Puntos: ${T.pts} / ${T.i * 6}</span></div>
-    <div class="prog"><i style="width:${100 * T.i / T.ids.length}%"></i></div>
-    ${imgTag(id, "qimg", true)}
-    <div id="tform" ${T.checked ? 'style="display:none"' : ""}>
-      <label class="f">Nombre de la roca</label><input type="text" id="f_nombre" autocomplete="off" ${T.hints ? 'list="names"' : ""} value="${esc(a.nombre || "")}">${dl}
-      <label class="f">Composición mineralógica <small>(minerales de la roca / de la facie)</small></label><textarea id="f_comp">${esc(a.comp || "")}</textarea>
-      <label class="f">Tipo de metamorfismo</label>${sel("f_tipo", OPC.tipo, a.tipo)}
-      <label class="f">Estructura</label>${sel("f_foli", OPC.foli, a.foli)}
-      <label class="f">Textura <small>(ej.: lepidoblástica, granoblástica…)</small></label><input type="text" id="f_text" value="${esc(a.text || "")}">
-      <label class="f">Grado</label>${sel("f_grado", OPC.grado, a.grado)}
-      <label class="f">Factores predominantes</label>${sel("f_fac", Object.values(OPC.factor), a.fac)}
-      <label class="f">Facies de metamorfismo</label>${sel("f_facies", OPC.facies, a.facies)}
-      <label class="f">Protolitos <small>(rocas preexistentes)</small></label><textarea id="f_proto">${esc(a.proto || "")}</textarea>
-      <label class="f">Diagnósticos</label><textarea id="f_diag">${esc(a.diag || "")}</textarea>
-      <div class="row" style="margin-top:14px"><button class="btn" data-act="tcheck">Revisar esta roca</button></div>
-    </div><div id="tres"></div>`;
+  const head = `<div class="row" style="justify-content:space-between"><b>Roca ${T.i + 1} de ${T.ids.length} · ${T.mode === "fill" ? "Rellenar" : "Alternativas"}</b><span class="sub">Puntos: ${T.pts} / ${T.i * 6}</span></div>
+    <div class="prog"><i style="width:${100 * T.i / T.ids.length}%"></i></div>${imgTag(id, "qimg", true)}`;
+  const sel = (idn, arr) => `<select id="${idn}"><option value="">—</option>${arr.map(o => `<option>${esc(o)}</option>`).join("")}</select>`;
+  let form;
+  if (T.mode === "fill") {
+    const dl = T.hints ? `<datalist id="names">${ROCAS.map(x => `<option value="${esc(x.nombre)}">`).join("")}</datalist>` : "";
+    const tx = (i, l, sm) => `<label class="f">${l}${sm ? ` <small>${sm}</small>` : ""}</label><input type="text" id="${i}" autocomplete="off">`;
+    const ta = (i, l, sm) => `<label class="f">${l}${sm ? ` <small>${sm}</small>` : ""}</label><textarea id="${i}"></textarea>`;
+    form = `<div class="note" style="color:var(--ink)">Si el PPT no da el dato, déjalo vacío o escribe “no aplica”.</div>
+      <label class="f">Nombre de la roca</label><input type="text" id="f_nombre" autocomplete="off" ${T.hints ? 'list="names"' : ""}>${dl}
+      ${tx("f_tipo", "Tipo de metamorfismo", "(regional, contacto, dislocación…)")}
+      ${tx("f_foli", "Estructura", "(foliada, no foliada, cataclástica)")}
+      ${tx("f_text", "Textura", "(ej.: lepidoblástica)")}
+      ${tx("f_grado", "Grado", "(muy bajo, bajo, medio, medio-alto, alto)")}
+      ${tx("f_facies", "Facies de metamorfismo")}
+      ${ta("f_comp", "Composición mineralógica", "(solo nombres, separados por coma)")}
+      ${ta("f_proto", "Protolitos", "(rocas preexistentes, separadas por coma)")}
+      ${ta("f_diag", "Diagnósticos", "(características separadas por coma)")}`;
+  } else {
+    T.q[T.i] = T.q[T.i] || mcPrep(r);
+    const q = T.q[T.i];
+    const chips = (k, l) => `<label class="f">${l} <small>(marca todas las que correspondan)</small></label><div class="chips" data-chips="${k}">${q[k].map(o => `<button type="button" class="chip" data-chip="${esc(o.l)}">${esc(o.l)}</button>`).join("")}</div>`;
+    form = `<label class="f">¿Qué roca es?</label><div class="opts" id="f_names">${q.names.map(o => `<label class="opt" style="display:block"><input type="radio" name="f_nombre" value="${o.id}"> ${esc(o.l)}</label>`).join("")}</div>
+      <label class="f">Tipo de metamorfismo</label>${sel("f_tipo", OPC.tipo)}
+      <label class="f">Estructura</label>${sel("f_foli", OPC.foli)}
+      <label class="f">Textura</label>${sel("f_text", OPC.textura)}
+      <label class="f">Grado</label>${sel("f_grado", OPC.grado)}
+      <label class="f">Facies de metamorfismo</label>${sel("f_facies", OPC.facies)}
+      ${chips("comp", "Composición mineralógica")}${chips("proto", "Protolitos")}${chips("diag", "Diagnósticos")}`;
+  }
+  $("#view").innerHTML = `${head}<div id="tform" ${T.checked ? 'style="display:none"' : ""}>${form}
+    <div class="row" style="margin-top:14px"><button class="btn" data-act="tcheck">Revisar esta roca</button></div></div><div id="tres"></div>`;
   if (T.checked) tShowResult();
+}
+function mcPrep(r) {
+  const pool = f => { const seen = new Set(), out = []; ROCAS.filter(x => x.id !== r.id).forEach(x => x[f].forEach(a => { const k = norm(lab(a)); if (!seen.has(k)) { seen.add(k); out.push(a); } })); return out; };
+  const mk = (f, total) => {
+    const own = r[f], ownA = own.flatMap(altsOf);
+    const dist = shuffle(pool(f).filter(a => !altsOf(a).some(x => ownA.includes(x)))).slice(0, Math.max(4, total - own.length));
+    return shuffle([...own.map(a => ({ l: lab(a), ok: true })), ...dist.map(a => ({ l: lab(a), ok: false }))]);
+  };
+  const same = shuffle(ROCAS.filter(x => x.id !== r.id && x.grupo === r.grupo)).slice(0, 2);
+  const rest = shuffle(ROCAS.filter(x => x.id !== r.id && !same.includes(x))).slice(0, 3 - same.length);
+  return { names: shuffle([r, ...same, ...rest]).map(x => ({ id: x.id, l: x.nombre })), comp: mk("comp", 9), proto: mk("proto", 8), diag: mk("diag", 8) };
 }
 function readForm() {
   const g = id => ($(id) ? $(id).value : "");
-  return { nombre: g("#f_nombre"), comp: g("#f_comp"), tipo: g("#f_tipo"), foli: g("#f_foli"), text: g("#f_text"), grado: g("#f_grado"), fac: g("#f_fac"), facies: g("#f_facies"), proto: g("#f_proto"), diag: g("#f_diag") };
+  const A = { tipo: g("#f_tipo"), foli: g("#f_foli"), text: g("#f_text"), grado: g("#f_grado"), facies: g("#f_facies") };
+  if (T.mode === "fill") return Object.assign(A, { nombre: g("#f_nombre"), comp: g("#f_comp"), proto: g("#f_proto"), diag: g("#f_diag") });
+  const chk = k => [...document.querySelectorAll(`[data-chips="${k}"] .chip.on`)].map(c => c.dataset.chip);
+  const rd = document.querySelector('input[name="f_nombre"]:checked');
+  return Object.assign(A, { nombre: rd ? rd.value : "", comp: chk("comp"), proto: chk("proto"), diag: chk("diag") });
 }
-function kwCheck(typed, kstr, need) {
-  const inp = norm(typed), gs = parseK(kstr), hit = gs.filter(g => g.alts.some(x => x && inp.includes(x))), miss = gs.filter(g => !hit.includes(g));
-  const n = need === "all" ? gs.length : Math.min(need, gs.length);
-  return { ok: hit.length >= n, hit: hit.map(g => g.label), miss: miss.map(g => g.label), need: n, total: gs.length };
+// Compara una lista de átomos contra lo escrito (rellenar) o lo marcado (alternativas)
+function listCheck(mode, user, atoms, need, extras) {
+  const labels = atoms.map(lab);
+  if (mode === "fill") {
+    const inp = norm(user), hit = atoms.filter(a => atomHit(inp, a));
+    const nx = (extras || []).filter(x => inp.includes(norm(x))).length;
+    return { ok: hit.length + nx >= need, hit: hit.map(lab), miss: atoms.filter(a => !hit.includes(a)).map(lab), extra: [] };
+  }
+  const hit = labels.filter(l => user.includes(l)), wrong = user.filter(l => !labels.includes(l));
+  return { ok: hit.length >= need && wrong.length <= 1, hit, miss: labels.filter(l => !hit.includes(l)), extra: wrong };
 }
-function gradeRock(r, a) {
-  const R = {};
-  R.nombre = { ok: nameOk(r, a.nombre), user: a.nombre || "(vacío)", corr: r.nombre + (r.alias.length ? " (también: " + r.alias.join(", ") + ")" : "") };
-  const cK = kwCheck(a.comp, r.kComp, Math.ceil(parseK(r.kComp).length / 2) > 3 ? 3 : Math.ceil(parseK(r.kComp).length / 2));
-  R.comp = { ok: cK.ok, user: a.comp || "(vacío)", corr: r.comp, extra: `Aciertos: ${cK.hit.join(", ") || "ninguno"} · Te faltó: ${cK.miss.join(", ") || "—"} (mín. ${cK.need})` };
-  R.tipo = { ok: a.tipo === r.tipo, user: a.tipo || "(vacío)", corr: r.tipo };
-  const tK = kwCheck(a.text, r.kText, 1);
-  R.estr = { ok: a.foli === OPC.foli[r.foli] && tK.ok, user: `${a.foli || "—"} / ${a.text || "—"}`, corr: `${OPC.foli[r.foli]} / ${r.textura}`, extra: (a.foli === OPC.foli[r.foli] ? "Estructura ✓" : "Estructura ✗") + " · " + (tK.ok ? "Textura ✓" : "Textura ✗") };
-  const gOk = a.grado === r.grado || (r.gradoOk || []).includes(a.grado);
-  const fkOk = [r.fk]; if (r.fk === "alta") fkOk.push("media"); if (r.fk === "media") fkOk.push("alta");
-  const fOk = fkOk.some(k => OPC.factor[k] === a.fac);
-  R.grado = { ok: gOk && fOk, user: `${a.grado || "—"} / ${a.fac || "—"}`, corr: `${r.grado}${r.gradoOk ? " (aceptable: " + [...new Set([r.grado, ...r.gradoOk])].join(", ") + ")" : ""} / ${OPC.factor[r.fk]}`, extra: (gOk ? "Grado ✓" : "Grado ✗") + " · " + (fOk ? "Factores ✓" : "Factores ✗") };
-  R.facies = { ok: r.facies.includes(a.facies), user: a.facies || "(vacío)", corr: r.facies.join(" / ") + (r.faciesDeducida ? " (deducida; el PPT no la indica)" : "") };
-  const pK = kwCheck(a.proto, r.kProto, 2);
-  R.proto = { ok: pK.ok, user: a.proto || "(vacío)", corr: r.proto, extra: `Aciertos: ${pK.hit.join(", ") || "ninguno"} · Te faltó: ${pK.miss.join(", ") || "—"} (mín. ${pK.need})` };
-  const dK = kwCheck(a.diag, r.kDiag, 2);
-  R.diag = { ok: dK.ok, user: a.diag || "(vacío)", corr: r.diag, extra: `Aciertos: ${dK.hit.join(", ") || "ninguno"} · Te faltó: ${dK.miss.join(", ") || "—"} (mín. ${dK.need})` };
+function gradeRock(r, a, mode) {
+  const R = {}, fill = mode === "fill";
+  const naOk = v => fill ? isNA(v) : v === NA || !v;
+  const uTxt = v => (v === undefined || v === "" ? "(vacío)" : v);
+  R.nombre = { ok: fill ? nameOk(r, a.nombre) : a.nombre === r.id, user: fill ? (a.nombre || "(vacío)") : (byId(a.nombre)?.nombre || "(sin marcar)"), corr: r.nombre + (r.alias.length ? " (también: " + r.alias.join(", ") + ")" : "") };
+  const cL = listCheck(mode, a.comp, r.comp, needComp(r.comp.length), r.compExtra);
+  const lineList = (L, lead) => `Aciertos: ${L.hit.join(", ") || "ninguno"} · Te faltó: ${L.miss.join(", ") || "—"}${L.extra.length ? " · De más: " + L.extra.join(", ") : ""}`;
+  const uList = v => fill ? (v || "(vacío)") : (v.join(", ") || "(sin marcar)");
+  R.comp = { ok: cL.ok, user: uList(a.comp), corr: labs(r.comp), extra: lineList(cL) };
+  // tipo
+  let tOk; if (!r.tipo) tOk = naOk(a.tipo); else tOk = !naOk(a.tipo) && (fill ? atomHit(norm(a.tipo), r.tipo) : atomExact(a.tipo, r.tipo));
+  R.tipo = { ok: tOk, user: uTxt(a.tipo), corr: r.tipo ? lab(r.tipo) : VAC };
+  // estructura / textura
+  const fOk = fill ? classFoli(a.foli) === r.foli : a.foli === OPC.foli[r.foli];
+  const texLabels = [...r.kText.map(lab), r.textura];
+  const xOk = fill ? r.kText.some(k => atomHit(norm(a.text), k)) : texLabels.includes(a.text);
+  R.estr = { ok: fOk && xOk, user: `${a.foli || "—"} / ${a.text || "—"}`, corr: `${OPC.foli[r.foli]} / ${r.textura}`, extra: (fOk ? "Estructura ✓" : "Estructura ✗") + " · " + (xOk ? "Textura ✓" : "Textura ✗") };
+  // grado
+  const gOk = r.grado ? (fill ? norm(a.grado) === norm(r.grado) : a.grado === r.grado) : naOk(a.grado);
+  R.grado = { ok: gOk, user: uTxt(a.grado), corr: r.grado || VAC, extra: "Los factores (T° y P) no están en el PPT: no se evalúan." };
+  // facies
+  let faOk; if (!r.facies.length) faOk = naOk(a.facies); else faOk = !naOk(a.facies) && r.facies.some(x => fill ? atomHit(norm(a.facies), x) : atomExact(a.facies, x));
+  R.facies = { ok: faOk, user: uTxt(a.facies), corr: r.facies.length ? r.facies.map(lab).join(" / ") : (r.faciesTxt || VAC) };
+  const pL = listCheck(mode, a.proto, r.proto, needProto(r.proto.length), r.protoExtra);
+  R.proto = { ok: pL.ok, user: uList(a.proto), corr: labs(r.proto), extra: lineList(pL) };
+  const dL = listCheck(mode, a.diag, r.diag, needDiag(r.diag.length));
+  R.diag = { ok: dL.ok, user: uList(a.diag), corr: labs(r.diag), extra: lineList(dL) };
   return R;
 }
 const rockPts = R => (R.nombre.ok && R.comp.ok) ? ["tipo", "estr", "grado", "facies", "proto", "diag"].filter(k => R[k].ok).length : 0;
@@ -759,9 +746,10 @@ function tShowResult() {
       <button class="btn sec sm" data-flip="${k}">${f.ok ? "Marcar mal" : "Marcar bien"}</button></div>
       <div class="u"><b>Tú:</b> ${esc(f.user)}</div><div class="c"><b>Correcto:</b> ${esc(f.corr)}</div>${f.extra ? `<div class="c">${esc(f.extra)}</div>` : ""}</div>`;
   }).join("");
+  const r = byId(T.ids[T.i]);
   $("#tres").innerHTML = `<div class="row" style="justify-content:space-between;margin-top:10px"><span class="score">${pts} / 6</span>
     <span class="sub">${gate ? "Nombre y composición OK" : "⚠ Nombre o composición mal → el resto cuenta como malo"}</span></div>
-    ${rows}
+    ${rows}${r.nota ? `<div class="note">${esc(r.nota)}</div>` : ""}
     <div class="row"><button class="btn" data-act="tnext">${T.i + 1 >= T.ids.length ? "Ver resultado final" : "Siguiente roca →"}</button><button class="btn sec" data-open="${T.ids[T.i]}">Ver ficha</button></div>`;
 }
 function tSummary() {
@@ -771,21 +759,23 @@ function tSummary() {
   $("#view").innerHTML = `<h2>Resultado del test</h2><div class="score">${tot} / ${T.ids.length * 6}</div>
     ${rows.map((x, i) => `<div class="res ${x.p >= 5 ? "ok" : "bad"}"><div class="h"><span>${i + 1}. ${esc(x.r.nombre)}</span><span>${x.p} / 6${x.gate ? "" : " ⚠"}</span></div>${x.gate ? "" : '<div class="c">Falló nombre o composición → todo malo</div>'}</div>`).join("")}
     <p class="sub">Las rocas con menos de 5 puntos se agregaron a “Por repasar”.</p>
-    <div class="row"><button class="btn" data-act="tstart">Otro test</button><button class="btn sec" data-act="tgorep">Ir a repasar</button></div>`;
+    <div class="row"><button class="btn" data-act="tstart" data-mode="${T.mode}">Otro test (${T.mode === "fill" ? "rellenar" : "alternativas"})</button><button class="btn sec" data-act="tmenu">Cambiar modo</button><button class="btn sec" data-act="tgorep">Ir a repasar</button></div>`;
 }
-function tStart(prio) {
+function tStart(mode) {
+  const prio = !!($("#prio") && $("#prio").checked);
   let ids = shuffle(ROCAS.map(r => r.id));
   if (prio) { const rep = ids.filter(i => ST.rep[i]), rest = ids.filter(i => !ST.rep[i]); ids = [...rep, ...rest]; }
   ids = ids.slice(0, 10); if (prio) ids = shuffle(ids);
-  T = { ids, i: 0, ans: [], res: [], pts: 0, checked: false, hints: !!($("#hints") && $("#hints").checked) };
+  T = { mode, ids, i: 0, ans: [], res: [], q: [], pts: 0, checked: false, hints: !!($("#hints") && $("#hints").checked) };
   vTest();
 }
 
 // ====== TABLA ======
 let TB = { cover: false, grp: "grupo" };
 function vTabla() {
-  const cols = [["Tipo de metamorfismo", r => r.tipo], ["Estructura / Textura", r => OPC.foli[r.foli] + " — " + r.textura], ["Grado", r => r.grado + (r.gradoOk ? "" : "")], ["Factores (compl.)", r => OPC.factor[r.fk]], ["Facies", r => r.facies.join(" / ")], ["Composición", r => r.comp], ["Protolitos", r => r.proto], ["Diagnósticos", r => r.diag]];
-  const grpKey = { grupo: r => GRUPOS[r.grupo], facies: r => r.facies[0], tipo: r => r.tipo, none: () => "" }[TB.grp];
+  const V = "—";
+  const cols = [["Tipo de metamorfismo", r => r.tipo ? lab(r.tipo) : V], ["Estructura / Textura", r => OPC.foli[r.foli] + " — " + r.textura], ["Grado", r => r.grado || V], ["Facies", r => r.facies.length ? r.facies.map(lab).join(" / ") : (r.faciesTxt || V)], ["Composición", r => labs(r.comp)], ["Protolitos", r => labs(r.proto)], ["Diagnósticos", r => labs(r.diag)]];
+  const grpKey = { grupo: r => GRUPOS[r.grupo], facies: r => r.facies.length ? lab(r.facies[0]) : "Sin facie indicada", tipo: r => r.tipo ? lab(r.tipo) : "Tipo no indicado", none: () => "" }[TB.grp];
   let list = ROCAS.slice(); if (TB.grp !== "none") list.sort((a, b) => grpKey(a).localeCompare(grpKey(b)));
   let last = null, body = "";
   list.forEach(r => {
@@ -793,7 +783,7 @@ function vTabla() {
     body += `<tr><td class="n" data-open="${r.id}" style="cursor:pointer">${esc(r.nombre)}</td>${cols.map(([, f]) => `<td class="cell">${esc(f(r))}</td>`).join("")}</tr>`;
   });
   $("#view").innerHTML = `<h2>Tabla completa</h2>
-    <p class="sub">Es la misma estructura del oficio. Toca el nombre para abrir la ficha.</p>
+    <p class="sub">Misma estructura del oficio. “—” significa que el PPT no lo indica (vacío). Toca el nombre para abrir la ficha.</p>
     <div class="row"><label class="chip ${TB.cover ? "on" : ""}" id="tcover" style="cursor:pointer">🙈 Modo tapado (toca una celda para ver)</label>
       <select id="tgrp" style="width:auto"><option value="grupo">Agrupar por: foliación</option><option value="facies">Agrupar por: facies</option><option value="tipo">Agrupar por: tipo de metamorfismo</option><option value="none">Sin agrupar</option></select></div>
     <div class="tablewrap ${TB.cover ? "cover" : ""}" style="margin-top:8px"><table class="t"><thead><tr><th class="n">Roca</th>${cols.map(([h]) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>`;
@@ -802,27 +792,28 @@ function vTabla() {
 
 // ====== CLAVES ======
 function vClaves() {
-  const byF = {}; ROCAS.forEach(r => r.facies.forEach(f => (byF[f] = byF[f] || []).push(r)));
+  const byF = {}; ROCAS.forEach(r => r.facies.forEach(f => (byF[lab(f)] = byF[lab(f)] || []).push(r)));
+  const none = ROCAS.filter(r => !r.facies.length);
   $("#view").innerHTML = `
   <h2>Cómo contestar cada roca</h2>
-  <div class="concept"><b>Orden:</b> 1) Reconocerla y nombrarla → 2) Composición → recién ahí: tipo de metamorfismo, estructura/textura, grado y factores, facies, protolitos y diagnóstico. Si 1 o 2 fallan, todo malo.</div>
+  <div class="concept"><b>Orden:</b> 1) Reconocerla y nombrarla → 2) Composición → recién ahí: tipo de metamorfismo, estructura/textura, grado y factores, facies, protolitos y diagnóstico. Si 1 o 2 fallan, todo malo. Si el PPT no da el dato, va vacío o “no aplica”.</div>
   <h2>Conceptos del PPT</h2>${CONCEPTOS.map(([k, v]) => `<div class="concept"><b>${esc(k)}:</b> ${esc(v)}</div>`).join("")}
   <h2>Esquemas del PPT</h2>
   <h3>Estructura (foliada: minerales orientados por esfuerzo)</h3><img class="schem" src="${PHOTOS.esq_estructura}" alt="Esquema de estructura">
   <h3>Texturas básicas</h3><img class="schem" src="${PHOTOS.esq_texturas}" alt="Texturas básicas">
   <h3>Facies metamórficas (P vs T)</h3><img class="schem" src="${PHOTOS.esq_facies}" alt="Diagrama de facies">
-  <h2>Facies y sus rocas</h2><p class="sub">El mineral crítico es complemento (no viene en el PPT).</p>
-  ${Object.keys(FACIES_INFO).map(f => `<div class="fac"><i style="background:${FACIES_INFO[f].color}"></i><div><b>${esc(f)}</b> <span class="pill">${esc(FACIES_INFO[f].grado)}</span><div class="comp">Crítico: ${esc(FACIES_INFO[f].crit)}</div><div>${(byF[f] || []).map(r => `<span class="pill" data-open="${r.id}" style="cursor:pointer">${esc(r.nombre)}</span>`).join("") || '<span class="mini">—</span>'}</div></div></div>`).join("")}
-  <h2>Secuencia de grado en pelitas (complemento)</h2>
-  <div class="concept">Pizarra → Filita → Esquisto (mica → granate/andalucita → estaurolita → sillimanita) → Gneiss → Migmatita. A más grado: más grano, más brillo de micas, aparecen minerales índice.</div>`;
+  <h2>Facies y sus rocas (según el PPT)</h2>
+  ${Object.keys(FACIES_COLOR).map(f => `<div class="fac"><i style="background:${FACIES_COLOR[f]}"></i><div><b>${esc(f)}</b><div>${(byF[f] || []).map(r => `<span class="pill" data-open="${r.id}" style="cursor:pointer">${esc(r.nombre)}</span>`).join("") || '<span class="mini">—</span>'}</div></div></div>`).join("")}
+  <div class="fac"><i style="background:#777"></i><div><b>Sin facie indicada</b><div>${none.map(r => `<span class="pill" data-open="${r.id}" style="cursor:pointer">${esc(r.nombre)}</span>`).join("")}</div></div></div>`;
 }
 
 // ====== EVENTOS ======
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-tab],[data-open],[data-fg],[data-act],[data-pick],[data-qm],[data-qg],[data-flip],#tcover,td.cell,.big,.lightbox");
+  const t = e.target.closest("[data-chip],[data-tab],[data-open],[data-fg],[data-act],[data-pick],[data-qm],[data-qg],[data-flip],#tcover,td.cell,.big,.lightbox");
   if (!t) return;
   if (t.matches(".lightbox")) { t.remove(); return; }
   if (t.matches(".big")) { const l = document.createElement("div"); l.className = "lightbox"; l.innerHTML = `<img src="${t.src}">`; document.body.appendChild(l); return; }
+  if (t.dataset.chip !== undefined) { t.classList.toggle("on"); return; }
   if (t.dataset.tab) return go(t.dataset.tab);
   if (t.dataset.open) return openRock(t.dataset.open);
   if (t.dataset.fg) { F.g = t.dataset.fg; return vEstudiar(); }
@@ -848,10 +839,10 @@ document.addEventListener("click", e => {
   if (a === "qnext") { Q.i++; Q.done = false; Q.cur = null; return vIdent(); }
   if (a === "qcheck") return qCheck(false);
   if (a === "qskip") return qCheck(true);
-  if (a === "tstart") return tStart(false);
-  if (a === "tstartrep") return tStart(true);
+  if (a === "tstart") return tStart(t.dataset.mode || "fill");
+  if (a === "tmenu") { T = null; return vTest(); }
   if (a === "tcheck") {
-    const A = readForm(); T.ans[T.i] = A; T.res[T.i] = gradeRock(byId(T.ids[T.i]), A); T.checked = true;
+    const A = readForm(); T.ans[T.i] = A; T.res[T.i] = gradeRock(byId(T.ids[T.i]), A, T.mode); T.checked = true;
     $("#tform").style.display = "none"; return tShowResult();
   }
   if (a === "tnext") { T.pts += rockPts(T.res[T.i]); T.i++; T.checked = false; window.scrollTo(0, 0); return vTest(); }
